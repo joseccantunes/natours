@@ -9,7 +9,17 @@ exports.checkID = (req, resp, next, val) => {
   if (req.params.id * 1 > tours.length) {
     return resp.status(404).json({
       status: 'fail',
-      message: 'Invalid ID',
+      message: `Invalid ID: ${val}`,
+    });
+  }
+  next();
+};
+
+exports.checkBody = (req, resp, next) => {
+  if (!req.body.name || !req.body.price) {
+    return resp.status(400).json({
+      status: 'fail',
+      message: 'Invalid Request, missing name or price',
     });
   }
   next();
