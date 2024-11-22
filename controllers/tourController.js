@@ -1,9 +1,26 @@
 const Tour = require('../models/tourModel');
+const APIFeatures = require('../utils/apiFeature');
+
+exports.aliasTopTours = (req, resp, next) => {
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage';
+  req.query.fields = 'name,price,reatinsAverage,summary,difficulty';
+  next();
+};
 
 exports.getAllTours = async (req, resp) => {
   try {
-    const tours = await Tour.find();
+    //BUILD QUERY
+    const feature = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sorting()
+      .limitFields()
+      .paginate();
 
+    //EXECUTE QUERY
+    const tours = await feature.query;
+
+    //SEND RESPONSE
     resp.status(200).json({
       status: 'success',
       results: tours.length,
@@ -12,6 +29,7 @@ exports.getAllTours = async (req, resp) => {
       },
     });
   } catch (err) {
+    console.log(err);
     resp.status(400).json({
       status: 'fail',
       message: err,
@@ -52,7 +70,7 @@ exports.createTour = async (req, resp) => {
   } catch (err) {
     resp.status(400).json({
       status: 'fail',
-      message: 'Invalid data sent',
+      message: err,
     });
   }
 
