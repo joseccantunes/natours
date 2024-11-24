@@ -1,3 +1,5 @@
 {
-  "singleQuote": true
+  "singleQuote": true,
+  "sortingMethod": "alphabetical",
+  "plugins": ["./node_modules/prettier-plugin-sort-imports/dist/index.js"]
 }
