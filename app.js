@@ -18,11 +18,6 @@ app.use(express.json());
 app.use(express.static(`${__dirname}/public`));
 
 app.use((req, resp, next) => {
-  console.log('Hello from the middleware 👋');
-  next();
-});
-
-app.use((req, resp, next) => {
   req.requestTime = new Date().toISOString();
   next();
 });
@@ -31,5 +26,13 @@ app.use((req, resp, next) => {
 
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+
+app.all('*', (req, resp, next) => {
+  resp.status(404).json({
+    status: 'fail',
+    message: `Can't find ${req.originalUrl} on this server`,
+  });
+  next();
+});
 
 module.exports = app;
