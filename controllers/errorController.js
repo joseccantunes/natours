@@ -1,3 +1,21 @@
+const AppError = require('../utils/appError');
+
+function handleCastErrorDB(err) {
+  const message = `Invalid ${err.path} is ${err.value}`;
+  return new AppError(message, 400);
+}
+
+function handleDuplicatedFieldsDB(err) {
+  const message = `Duplicated field value "${err.keyValue.name}". Please use another value.`;
+  return new AppError(message, 400);
+}
+
+function handleValidationErrorDB(err) {
+  const errors = Object.values(err.errors).map((el) => el.message);
+  const message = `Invalid imput data. ${errors.join('. ')}`;
+  return new AppError(message, 400);
+}
+
 function sendErrorDev(err, resp) {
   resp.status(err.statusCode).json({
     status: err.status,
@@ -35,6 +53,11 @@ module.exports = (err, req, resp, next) => {
   if (process.env.NODE_ENV === 'development') {
     sendErrorDev(err, resp);
   } else {
-    sendErrorProd(err, resp);
+    console.log(err);
+    let error = { ...err };
+    if (err.name === 'CastError') error = handleCastErrorDB(error);
+    if (err.code === 11000) error = handleDuplicatedFieldsDB(error);
+    if (err.name === 'ValidationError') error = handleValidationErrorDB(error);
+    sendErrorProd(error, resp);
   }
 };
