@@ -49,7 +49,7 @@ userSchema.methods.validatePassword = async function (candidatePassword) {
 
 userSchema.methods.checkUserPassword = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
-    const timestamp = this.passwordChangedAt.getTime() / 1000;
+    const timestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
     return JWTTimestamp < timestamp;
   }
   return false;
