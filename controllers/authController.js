@@ -8,11 +8,24 @@ const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const sendEmail = require('../utils/email');
 
-const { restrictTo } = require('./tourController');
-
 function signToken(id) {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+}
+
+function createSendToken(user, statusCode, resp) {
+  const token = signToken(user._id);
+
+  //just in case password is set (i.e. login, changePassword), let's unset it
+  user.password = undefined;
+
+  resp.status(statusCode).json({
+    status: 'success',
+    token,
+    data: {
+      user,
+    },
   });
 }
 
@@ -26,15 +39,8 @@ exports.signup = catchAsync(async (req, resp, next) => {
     role: 'admin',
   });
 
-  const token = signToken(newUser._id);
-
-  resp.status(201).json({
-    status: 'success',
-    token,
-    data: {
-      user: newUser,
-    },
-  });
+  // send token to client
+  createSendToken(newUser, 201, resp);
 });
 
 exports.login = catchAsync(async (req, resp, next) => {
@@ -54,11 +60,7 @@ exports.login = catchAsync(async (req, resp, next) => {
   }
 
   // 3) if everything is ok, send token to client
-  const token = signToken(user._id);
-  resp.status(200).json({
-    status: 'success',
-    token,
-  });
+  createSendToken(user, 200, resp);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -107,9 +109,8 @@ exports.restrictTo =
 
 exports.forgotPassword = catchAsync(async (req, resp, next) => {
   // 1) Get user based on POSTed email
-  console.log(req.body.email);
   const user = await User.findOne({ email: req.body.email });
-  console.log(user);
+
   if (!user) {
     return next(new AppError('There is no user with email address', 404));
   }
@@ -117,7 +118,6 @@ exports.forgotPassword = catchAsync(async (req, resp, next) => {
   // 2) Generate the random reset token
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateModifiedOnly: true });
-  console.log(resetToken);
 
   // 3) Send it to user's email
   const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
@@ -177,4 +177,24 @@ exports.resetPassword = catchAsync(async (req, resp, next) => {
     status: 'success',
     token,
   });
+
+  createSendToken(user, 200, resp);
+});
+
+exports.updatePassword = catchAsync(async (req, resp, next) => {
+  // 1) Get user from collection
+  const user = await User.findById(req.user.id).select('+password');
+
+  // 2) Check if POSTed current password is correct
+  if (!user || !(await user.validatePassword(req.body.oldPassword))) {
+    return next(new AppError('Your current password is wrong.', 401));
+  }
+
+  // 3) If so, update password
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  await user.save();
+
+  // 4) Log user in, send JWT
+  createSendToken(user, 200, resp);
 });
