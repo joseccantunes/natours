@@ -13,6 +13,8 @@ const {
   // checkID,
 } = require('../controllers/tourController');
 
+const reviewRouter = require('./reviewRoutes');
+
 const router = express.Router();
 
 //use of middleware aliasTopTours
@@ -26,5 +28,9 @@ router
   .get(getTour)
   .patch(updateTour)
   .delete(protect, restrictTo('admin', 'lead-guide'), deleteTour);
+
+//NESTED ROUTES
+//POST /tours/234fad4/reviews
+router.use('/:tourId/reviews', reviewRouter);
 
 module.exports = router;

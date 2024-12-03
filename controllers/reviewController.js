@@ -1,4 +1,6 @@
 const Review = require('../models/reviewModel');
+const Tour = require('../models/tourModel');
+const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
 exports.getAllReviews = catchAsync(async (req, resp) => {
@@ -12,7 +14,16 @@ exports.getAllReviews = catchAsync(async (req, resp) => {
   });
 });
 
-exports.createReview = catchAsync(async (req, resp) => {
+exports.createReview = catchAsync(async (req, resp, next) => {
+  // Allow nested routes
+  if (!req.body.tour) req.body.tour = req.params.tourId;
+  req.body.user = req.user.id;
+
+  const tour = Tour.findById(req.params.tourId);
+  if (!tour) {
+    return next(new AppError('No tour found with that ID', 404));
+  }
+
   const newReview = await Review.create(req.body);
 
   resp.status(201).json({
