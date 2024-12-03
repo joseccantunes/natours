@@ -1,6 +1,7 @@
 const fs = require('fs');
-const mongoose = require('mongoose');
+
 const dotenv = require('dotenv');
+const mongoose = require('mongoose');
 
 dotenv.config();
 
@@ -11,9 +12,7 @@ mongoose
   .then(() => console.log('DB connection successful'));
 
 //READ FILE
-const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/tours-simple.json`, 'utf-8'),
-);
+const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours.json`, 'utf-8'));
 
 //IMPORT DATA INTO DATABASE
 const importData = async () => {
