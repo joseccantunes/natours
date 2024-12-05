@@ -1,25 +1,6 @@
+const APIFeatures = require('../utils/apiFeature');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-
-exports.updateOne;
-exports.updateTour = catchAsync(async (req, resp, next) => {
-  //find, update and return the nupdated document
-  const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
-
-  if (!tour) {
-    return next(new AppError('No tour found with that ID', 404));
-  }
-
-  resp.status(200).json({
-    status: 'success',
-    data: {
-      tour,
-    },
-  });
-});
 
 exports.deleteOne = (Model) =>
   catchAsync(async (req, resp, next) => {
@@ -61,6 +42,49 @@ exports.createOne = (Model) =>
 
     resp.status(201).json({
       status: 'success',
+      data: {
+        data: doc,
+      },
+    });
+  });
+
+exports.getOne = (Model, popOptions) =>
+  catchAsync(async (req, resp, next) => {
+    let query = Model.findById(req.params.id);
+    if (popOptions) {
+      query = query.populate(popOptions);
+    }
+
+    const doc = await query;
+
+    if (!doc) {
+      return next(new AppError('No document found with that ID', 404));
+    }
+
+    resp.status(200).json({
+      status: 'success',
+      data: {
+        data: doc,
+      },
+    });
+  });
+
+exports.getAll = (Model) =>
+  catchAsync(async (req, resp, next) => {
+    //To allow for nested GET reviews on tour (hack)
+    let filter = {};
+    if (req.params.tourId) filter = { tour: req.params.tourId };
+
+    const features = new APIFeatures(Model.find(filter), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+    const doc = await features.query;
+
+    resp.status(200).json({
+      status: 'success',
+      results: doc.length,
       data: {
         data: doc,
       },
