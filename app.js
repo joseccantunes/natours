@@ -1,3 +1,5 @@
+const { join } = require('path');
+
 const express = require('express');
 const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit');
@@ -9,15 +11,21 @@ const globalErrorHandler = require('./controllers/errorController');
 const reviewRouter = require('./routes/reviewRoutes');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
+const viewRouter = require('./routes/viewRoutes');
 const AppError = require('./utils/appError');
 const deepSanitize = require('./utils/deepSanitize');
 
 // Initializing the express application
 const app = express();
 
-// 1. GLOBAL MIDDLEWARES
+app.set('view engine', 'pug');
+app.set('views', join(__dirname, 'views'));
 
-//Se security HTTP headers
+// 1) GLOBAL MIDDLEWARES
+// Serving static files
+app.use(express.static(join(__dirname, 'public')));
+
+// Set security HTTP headers
 app.use(helmet());
 
 // Development logging
@@ -26,7 +34,7 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Limit requests from same IP
+// Limit requests from same API
 const limiter = rateLimit({
   max: 100,
   windowMs: 60 * 60 * 1000, //1h
@@ -37,11 +45,12 @@ app.use('/api', limiter);
 
 // Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-//Data sanitization against NoSQL query injection
+// Data sanitization against NoSQL query injection
 app.use(mongoSanitize());
 
-//Data sanitization against XSS
+// Data sanitization against XSS
 app.use((req, res, next) => {
   req.body = deepSanitize(req.body);
   next();
@@ -61,9 +70,6 @@ app.use(
   }),
 );
 
-// Serving static files
-app.use(express.static(`${__dirname}/public`));
-
 // Test middleware
 app.use((req, resp, next) => {
   req.requestTime = new Date().toISOString();
@@ -71,6 +77,7 @@ app.use((req, resp, next) => {
 });
 
 // 2. ROUTE HANDLERS
+app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
