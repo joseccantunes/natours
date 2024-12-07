@@ -80,6 +80,10 @@ exports.getAll = (Model) =>
       .sort()
       .limitFields()
       .paginate();
+
+    // EXPLAIN query to see the query statistics
+    // const doc = await features.query.explain();
+
     const doc = await features.query;
 
     resp.status(200).json({
