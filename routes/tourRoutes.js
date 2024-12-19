@@ -12,6 +12,8 @@ const {
   getMonthlyPlan,
   getToursWithin,
   getDistances,
+  uploadTourImages,
+  resizeTourImages,
   // checkID,
 } = require('../controllers/tourController');
 
@@ -40,7 +42,13 @@ router
 router
   .route('/:id')
   .get(getTour)
-  .patch(protect, restrictTo('admin', 'lead-gide'), updateTour)
+  .patch(
+    protect,
+    restrictTo('admin', 'lead-gide'),
+    uploadTourImages,
+    resizeTourImages,
+    updateTour,
+  )
   .delete(protect, restrictTo('admin', 'lead-guide'), deleteTour);
 
 //NESTED ROUTES
