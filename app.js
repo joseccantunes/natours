@@ -1,5 +1,6 @@
 const { join } = require('path');
 
+const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const express = require('express');
 const mongoSanitize = require('express-mongo-sanitize');
@@ -89,6 +90,9 @@ app.use(
     ],
   }),
 );
+
+// Compress text sent to clients
+app.use(compression());
 
 // Test middleware
 app.use((req, resp, next) => {
