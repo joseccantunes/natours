@@ -21,6 +21,7 @@ const deepSanitize = require('./utils/deepSanitize');
 // Initializing the express application
 const app = express();
 
+app.set('trust proxy', 1);
 app.set('view engine', 'pug');
 app.set('views', join(__dirname, 'views'));
 
