@@ -10,6 +10,7 @@ const helmet = require('helmet');
 const hpp = require('hpp');
 const morgan = require('morgan');
 
+const { webhookCheckout } = require('./controllers/bookingController');
 const globalErrorHandler = require('./controllers/errorController');
 const bookingRouter = require('./routes/bookingRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
@@ -68,6 +69,11 @@ const limiter = rateLimit({
 });
 
 app.use('/api', limiter);
+app.post(
+  '/webhook-checkout',
+  express.raw({ type: 'application/json' }),
+  webhookCheckout,
+);
 
 // Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
