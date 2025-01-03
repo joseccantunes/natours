@@ -2,6 +2,7 @@ const { join } = require('path');
 
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
 const express = require('express');
 const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit');
@@ -26,6 +27,10 @@ app.set('view engine', 'pug');
 app.set('views', join(__dirname, 'views'));
 
 // 1) GLOBAL MIDDLEWARES
+// Implement CORS
+app.use(cors());
+app.options('*', cors());
+
 // Serving static files
 app.use(express.static(join(__dirname, 'public')));
 
